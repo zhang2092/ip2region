@@ -50,7 +50,6 @@ func (ip IpInfo) String() string {
 }
 
 func getIpInfo(cityId int64, line []byte) IpInfo {
-
 	lineSlice := strings.Split(string(line), "|")
 	ipInfo := IpInfo{}
 	length := len(lineSlice)
@@ -69,19 +68,16 @@ func getIpInfo(cityId int64, line []byte) IpInfo {
 	return ipInfo
 }
 
-func New(path string) error {
-
+func New(path string) (*Ip2Region, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	IpRegion = &Ip2Region{
+	return &Ip2Region{
 		dbFile:        path,
 		dbFileHandler: file,
-	}
-
-	return nil
+	}, nil
 }
 
 func (region *Ip2Region) Close() error {
@@ -93,9 +89,7 @@ func (region *Ip2Region) MemorySearch(ipStr string) (ipInfo IpInfo, err error) {
 
 	if region.totalBlocks == 0 {
 		region.dbBinStr, err = os.ReadFile(region.dbFile)
-
 		if err != nil {
-
 			return ipInfo, err
 		}
 
@@ -136,7 +130,6 @@ func (region *Ip2Region) MemorySearch(ipStr string) (ipInfo IpInfo, err error) {
 	dataPtr = dataPtr & 0x00FFFFFF
 	ipInfo = getIpInfo(getLong(region.dbBinStr, dataPtr), region.dbBinStr[(dataPtr)+4:dataPtr+dataLen])
 	return ipInfo, nil
-
 }
 
 func (region *Ip2Region) BinarySearch(ipStr string) (ipInfo IpInfo, err error) {
@@ -163,7 +156,6 @@ func (region *Ip2Region) BinarySearch(ipStr string) (ipInfo IpInfo, err error) {
 	h := region.totalBlocks
 
 	ip, err := ip2long(ipStr)
-
 	if err != nil {
 		return
 	}
@@ -180,7 +172,6 @@ func (region *Ip2Region) BinarySearch(ipStr string) (ipInfo IpInfo, err error) {
 
 		buffer := make([]byte, IndexBlockLength)
 		_, err = region.dbFileHandler.Read(buffer)
-
 		if err != nil {
 			return ipInfo, err
 		}
@@ -360,14 +351,12 @@ func (region *Ip2Region) BtreeSearch(ipStr string) (ipInfo IpInfo, err error) {
 }
 
 func getLong(b []byte, offset int64) int64 {
-
 	val := int64(b[offset]) |
 		int64(b[offset+1])<<8 |
 		int64(b[offset+2])<<16 |
 		int64(b[offset+3])<<24
 
 	return val
-
 }
 
 func ip2long(IpStr string) (int64, error) {
